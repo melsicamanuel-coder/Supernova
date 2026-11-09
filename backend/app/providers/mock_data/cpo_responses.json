@@ -1,0 +1,548 @@
+{
+  "responses": [
+    {
+      "product_name": "{{project_name}}",
+      "vision": "Empower distributed teams to coordinate effortlessly across timezones by making temporal awareness a first-class element of task management. Every team member should be able to see at a glance when their colleagues are available, hand off work seamlessly across timezone boundaries, and never miss a deadline because of a timezone miscalculation.",
+      "target_users": [
+        {
+          "name": "Distributed Team Lead",
+          "role": "Engineering manager or team lead responsible for coordinating work across 3+ timezones",
+          "pain_points": [
+            "Spends 30+ minutes daily manually calculating timezone overlaps for meetings and handoffs",
+            "Misses optimal collaboration windows because team availability is not visible at a glance",
+            "Struggles to assign tasks fairly across timezones without overburdening certain regions",
+            "Lacks visibility into whether async handoffs are happening smoothly or creating bottlenecks"
+          ],
+          "goals": [
+            "Reduce coordination overhead to under 10 minutes per day",
+            "Ensure equitable workload distribution across all timezone groups",
+            "Achieve smooth async handoffs with clear context transfer between shifts",
+            "Have real-time visibility into team-wide progress regardless of timezone"
+          ]
+        },
+        {
+          "name": "Remote Individual Contributor",
+          "role": "Developer, designer, or analyst working in a different timezone from the majority of their team",
+          "pain_points": [
+            "Frequently receives meeting invitations outside working hours",
+            "Blocks on tasks because the person who can unblock them is asleep",
+            "Misses real-time discussions that happen during other timezone's peak hours",
+            "Feels isolated from team decisions made during synchronous sessions"
+          ],
+          "goals": [
+            "Receive notifications and requests only during working hours",
+            "Have clear async handoff protocols so work continues while they sleep",
+            "Stay informed about team decisions without attending every synchronous meeting",
+            "Feel equally included in team processes regardless of timezone location"
+          ]
+        },
+        {
+          "name": "Operations Director",
+          "role": "Senior leader overseeing multiple distributed teams across the organization",
+          "pain_points": [
+            "Cannot get a consolidated view of productivity across timezone-distributed teams",
+            "Difficult to identify timezone-related bottlenecks in project delivery",
+            "Lacks data to make informed decisions about team composition across regions",
+            "Existing tools do not surface timezone-specific collaboration metrics"
+          ],
+          "goals": [
+            "Dashboard showing collaboration health metrics across all teams and timezones",
+            "Data-driven insights for optimizing team timezone composition",
+            "Standardized async handoff processes across the organization",
+            "Reduced project delivery delays attributable to timezone coordination failures"
+          ]
+        }
+      ],
+      "problem_statements": [
+        "Distributed teams lose an average of 4+ hours per week to timezone-related coordination friction, including scheduling conflicts, missed handoffs, and delayed feedback",
+        "Existing project management tools treat timezone as display metadata rather than a workflow-aware dimension, forcing teams to manage timezone complexity manually",
+        "Team leads lack visibility into timezone-specific bottlenecks, making it impossible to optimize task assignment and handoff timing",
+        "Individual contributors in minority timezones experience disproportionate meeting burden and information asymmetry"
+      ],
+      "functional_requirements": [
+        {
+          "id": "FR-001",
+          "title": "Timezone Overlap Heatmap",
+          "description": "Display an interactive heatmap showing overlapping working hours across all team members, highlighting optimal windows for synchronous collaboration",
+          "priority": "must"
+        },
+        {
+          "id": "FR-002",
+          "title": "Timezone-Aware Task Assignment",
+          "description": "When assigning tasks, display each assignee's current local time, working hours status, and upcoming availability. Warn if a deadline falls outside the assignee's working hours.",
+          "priority": "must"
+        },
+        {
+          "id": "FR-003",
+          "title": "Async Handoff Workflows",
+          "description": "Enable structured handoffs between timezone groups with automatic context bundling, status summaries, and clear next-action indicators for the receiving team",
+          "priority": "must"
+        },
+        {
+          "id": "FR-004",
+          "title": "Smart Meeting Scheduler",
+          "description": "Suggest optimal meeting times based on participant timezone overlap, working hour preferences, and existing calendar commitments",
+          "priority": "must"
+        },
+        {
+          "id": "FR-005",
+          "title": "Working Hours Configuration",
+          "description": "Allow each team member to set their timezone, working hours, and preferred meeting windows. Support flexible schedules and non-standard working hour patterns.",
+          "priority": "must"
+        },
+        {
+          "id": "FR-006",
+          "title": "Task Board with Timezone Context",
+          "description": "Standard kanban/list view for tasks with timezone-aware annotations: assignee local time, time-until-deadline in assignee's timezone, and handoff indicators",
+          "priority": "must"
+        },
+        {
+          "id": "FR-007",
+          "title": "Notification Scheduling",
+          "description": "Queue and deliver notifications according to each recipient's working hours. Urgent notifications can override; non-urgent notifications are batched for delivery at the start of the recipient's next working period.",
+          "priority": "should"
+        },
+        {
+          "id": "FR-008",
+          "title": "Slack Integration",
+          "description": "Bidirectional integration with Slack: receive task updates, create tasks from Slack messages, and query timezone overlap from within Slack channels",
+          "priority": "should"
+        },
+        {
+          "id": "FR-009",
+          "title": "Calendar Integration",
+          "description": "Read-only integration with Google Calendar and Outlook to factor existing commitments into scheduling suggestions and availability calculations",
+          "priority": "should"
+        },
+        {
+          "id": "FR-010",
+          "title": "Team Analytics Dashboard",
+          "description": "Visualize collaboration metrics: timezone overlap utilization, handoff completion rates, average response times by timezone pair, and meeting hour distribution fairness",
+          "priority": "could"
+        },
+        {
+          "id": "FR-011",
+          "title": "GitHub Integration",
+          "description": "Link tasks to GitHub issues and pull requests. Surface PR review assignments with timezone context to reduce review turnaround time.",
+          "priority": "could"
+        },
+        {
+          "id": "FR-012",
+          "title": "Mobile Companion App",
+          "description": "Lightweight mobile application for checking team availability, responding to handoff notifications, and updating task status on the go",
+          "priority": "could"
+        }
+      ],
+      "non_functional_requirements": [
+        {
+          "id": "NFR-001",
+          "title": "Performance",
+          "description": "Page load time under 2 seconds for the main dashboard. Timezone overlap calculations must complete in under 200ms for teams of up to 100 members.",
+          "priority": "must"
+        },
+        {
+          "id": "NFR-002",
+          "title": "Data Privacy",
+          "description": "Calendar data is processed in-session only and not stored permanently. Working hours and timezone data is stored with appropriate access controls. GDPR-compliant data handling.",
+          "priority": "must"
+        },
+        {
+          "id": "NFR-003",
+          "title": "Availability",
+          "description": "99.5% uptime SLA. Graceful degradation when third-party integrations are unavailable.",
+          "priority": "must"
+        },
+        {
+          "id": "NFR-004",
+          "title": "Accessibility",
+          "description": "WCAG 2.1 AA compliance. All timezone visualizations must have text-based alternatives. Color choices must be distinguishable for colorblind users.",
+          "priority": "should"
+        },
+        {
+          "id": "NFR-005",
+          "title": "Scalability",
+          "description": "Support up to 10,000 concurrent users and organizations with up to 500 team members without performance degradation.",
+          "priority": "should"
+        }
+      ],
+      "user_stories": [
+        {
+          "id": "US-001",
+          "as_a": "distributed team lead",
+          "i_want": "to see a visual heatmap of my team's overlapping working hours",
+          "so_that": "I can identify the best windows for synchronous collaboration without manually calculating timezone offsets",
+          "acceptance_criteria": [
+            "Heatmap displays all team members grouped by timezone",
+            "Overlapping hours are highlighted with intensity proportional to the number of available members",
+            "Clicking a time slot shows which specific members are available",
+            "Heatmap updates automatically when team composition or working hours change"
+          ]
+        },
+        {
+          "id": "US-002",
+          "as_a": "remote individual contributor",
+          "i_want": "to receive task notifications only during my configured working hours",
+          "so_that": "I am not disturbed outside work and can start my day with a clear summary of overnight activity",
+          "acceptance_criteria": [
+            "Non-urgent notifications are queued and delivered at the start of the user's working hours",
+            "Urgent notifications can be configured to override the quiet period",
+            "A morning digest summarizes all queued notifications, handoffs, and task updates",
+            "Users can configure their notification preferences and quiet hours independently"
+          ]
+        },
+        {
+          "id": "US-003",
+          "as_a": "team lead",
+          "i_want": "to create an async handoff when my sub-team finishes its work for the day",
+          "so_that": "the next timezone group can pick up exactly where we left off without losing context",
+          "acceptance_criteria": [
+            "Handoff includes a structured summary of completed work, blockers, and next actions",
+            "The receiving team gets a notification at the start of their working hours",
+            "Handoff status is tracked: created, acknowledged, in-progress, completed",
+            "Historical handoffs are searchable for retrospective analysis"
+          ]
+        },
+        {
+          "id": "US-004",
+          "as_a": "team lead",
+          "i_want": "to be warned when I assign a task with a deadline that falls outside the assignee's working hours",
+          "so_that": "I can adjust the deadline or reassign to someone in a more appropriate timezone",
+          "acceptance_criteria": [
+            "Warning appears during task assignment if the deadline is outside assignee working hours",
+            "Suggestion is offered for the nearest working-hours-compatible deadline",
+            "Alternative assignees in compatible timezones are suggested",
+            "Warning can be acknowledged and overridden with a reason"
+          ]
+        },
+        {
+          "id": "US-005",
+          "as_a": "operations director",
+          "i_want": "to view collaboration health metrics across all my distributed teams",
+          "so_that": "I can identify timezone-related bottlenecks and make data-driven staffing decisions",
+          "acceptance_criteria": [
+            "Dashboard shows average handoff completion time by timezone pair",
+            "Meeting hour distribution fairness score is displayed per team",
+            "Timezone overlap utilization rate is tracked over time",
+            "Filters allow drilling down by team, time period, and timezone region"
+          ]
+        },
+        {
+          "id": "US-006",
+          "as_a": "remote individual contributor",
+          "i_want": "to see what happened on shared tasks while I was offline",
+          "so_that": "I can quickly catch up on progress and understand what needs my attention",
+          "acceptance_criteria": [
+            "Activity feed shows task updates, comments, and status changes since last visit",
+            "Items requiring action are highlighted separately from informational updates",
+            "Feed is filterable by project, team, and update type",
+            "Time is displayed in the viewer's local timezone"
+          ]
+        },
+        {
+          "id": "US-007",
+          "as_a": "team lead",
+          "i_want": "to schedule a meeting that works for participants across multiple timezones",
+          "so_that": "I do not accidentally schedule during someone's night hours or create an unfair meeting burden",
+          "acceptance_criteria": [
+            "Scheduler shows a visual comparison of all participants' working hours",
+            "Optimal time slots are ranked by number of participants within working hours",
+            "Fairness indicator shows how meeting times distribute across timezone groups over time",
+            "Integration with Google Calendar and Outlook shows existing commitments"
+          ]
+        },
+        {
+          "id": "US-008",
+          "as_a": "distributed team lead",
+          "i_want": "to integrate task updates with our Slack workspace",
+          "so_that": "team members receive relevant updates in the tool they already use throughout the day",
+          "acceptance_criteria": [
+            "Task status changes are posted to a configurable Slack channel",
+            "Team members can create tasks from Slack messages via a slash command",
+            "Timezone overlap queries can be run from Slack",
+            "Notification preferences in the app control what is sent to Slack"
+          ]
+        }
+      ],
+      "feature_priorities": [
+        {
+          "feature": "Timezone Overlap Heatmap",
+          "priority": "must",
+          "rationale": "Core differentiator and primary activation feature. Provides immediate visible value in the first session."
+        },
+        {
+          "feature": "Timezone-Aware Task Board",
+          "priority": "must",
+          "rationale": "Foundation for daily use. Without task management, the product is a visualization tool rather than a workflow platform."
+        },
+        {
+          "feature": "Async Handoff Workflows",
+          "priority": "must",
+          "rationale": "Highest-value unmet need identified in research. Key differentiator from existing project management tools."
+        },
+        {
+          "feature": "Smart Meeting Scheduler",
+          "priority": "must",
+          "rationale": "Addresses one of the most frequent timezone pain points. Drives daily engagement and habit formation."
+        },
+        {
+          "feature": "Working Hours and Notification Scheduling",
+          "priority": "must",
+          "rationale": "Prerequisite for all timezone-aware features. Also directly addresses minority-timezone contributor pain."
+        },
+        {
+          "feature": "Slack Integration",
+          "priority": "should",
+          "rationale": "Primary distribution channel for adoption. Teams that integrate with Slack show 2.5x higher retention in comparable SaaS products."
+        },
+        {
+          "feature": "Calendar Integration",
+          "priority": "should",
+          "rationale": "Improves scheduling accuracy significantly. Required data source for smart meeting suggestions."
+        },
+        {
+          "feature": "Team Analytics Dashboard",
+          "priority": "could",
+          "rationale": "Valuable for team leads and operations directors but not required for initial adoption. Strong upsell feature for premium tier."
+        },
+        {
+          "feature": "GitHub Integration",
+          "priority": "could",
+          "rationale": "Enhances value for developer teams but narrows the addressable market if prioritized too early."
+        }
+      ],
+      "success_metrics": [
+        "70% of trial teams complete the timezone overlap heatmap setup within the first session",
+        "Teams using async handoffs report a 30% reduction in self-reported timezone coordination friction within 4 weeks",
+        "Average daily active usage exceeds 3 sessions per user per day within teams that have adopted the task board",
+        "Free-to-paid conversion rate exceeds 5% within the first 90 days",
+        "Net Promoter Score above 40 among teams spanning 3+ timezones",
+        "Less than 5% monthly churn rate for paid teams after the first 3 months"
+      ],
+      "out_of_scope": [
+        "Full project management suite (Gantt charts, resource planning, budget tracking)",
+        "Native mobile applications (responsive web in MVP, native apps deferred)",
+        "Video conferencing or real-time communication features",
+        "AI-powered task auto-assignment or workload optimization",
+        "Custom workflow automation or scripting engine",
+        "On-premise deployment or self-hosted options",
+        "Integration with more than 3 external platforms in the MVP"
+      ]
+    },
+    {
+      "product_name": "{{project_name}}",
+      "vision": "Create the definitive coordination platform for teams that work across time boundaries. {{project_name}} transforms timezone complexity from a daily friction point into a seamless, invisible part of how distributed teams collaborate and deliver.",
+      "target_users": [
+        {
+          "name": "Startup CTO",
+          "role": "Technical co-founder managing a remote engineering team of 8-25 across multiple countries",
+          "pain_points": [
+            "Context is lost between timezone shifts, causing duplicated work and missed blockers",
+            "Sprint ceremonies are scheduled at inconvenient times for at least one timezone group",
+            "Cannot gauge team velocity accurately because timezone handoff delays skew delivery metrics",
+            "Recruiting internationally increases timezone complexity faster than coordination capability grows"
+          ],
+          "goals": [
+            "Ship features at a predictable cadence regardless of team timezone distribution",
+            "Make timezone-distributed code review cycles as fast as co-located ones",
+            "Reduce the overhead of managing timezone complexity as the team grows",
+            "Attract global talent by demonstrating effective distributed work practices"
+          ]
+        },
+        {
+          "name": "Distributed Product Designer",
+          "role": "Senior designer working 8 timezones away from the majority of the product team",
+          "pain_points": [
+            "Design reviews happen during hours when they are offline, leading to feedback delays",
+            "Cannot participate in real-time brainstorming sessions with the core team",
+            "Handoff to developers lacks the context that a quick conversation would provide",
+            "Feels out of the loop on priority changes decided in synchronous meetings"
+          ],
+          "goals": [
+            "Have async-first design review workflows that do not require real-time presence",
+            "Receive structured daily briefings on decisions and priority changes",
+            "Hand off designs with sufficient context that developers rarely need follow-up questions",
+            "Contribute equally to team decisions despite timezone separation"
+          ]
+        }
+      ],
+      "problem_statements": [
+        "Distributed teams treat timezone management as an afterthought rather than a core workflow concern, resulting in systemic productivity losses",
+        "No existing tool provides timezone-aware task lifecycle management — from assignment through handoff to completion",
+        "Individual contributors in distant timezones bear disproportionate costs in meeting burden and information lag"
+      ],
+      "functional_requirements": [
+        {
+          "id": "FR-001",
+          "title": "Team Timezone Map",
+          "description": "Visual representation of all team members positioned on a world timezone view, showing current local time, working status (active/offline/meeting), and available overlap windows",
+          "priority": "must"
+        },
+        {
+          "id": "FR-002",
+          "title": "Task Management with Timezone Annotations",
+          "description": "Create, assign, and track tasks with timezone-aware features: local deadline display, working-hours warnings, and timezone-relative priority sorting",
+          "priority": "must"
+        },
+        {
+          "id": "FR-003",
+          "title": "Structured Async Handoffs",
+          "description": "End-of-shift workflow that bundles completed work, open blockers, and context notes into a handoff package delivered to the next timezone group at the start of their working hours",
+          "priority": "must"
+        },
+        {
+          "id": "FR-004",
+          "title": "Timezone-Fair Meeting Scheduler",
+          "description": "Automated meeting time suggestions that optimize for participant working hours, track historical meeting time distribution, and flag timezone-unfair patterns",
+          "priority": "should"
+        },
+        {
+          "id": "FR-005",
+          "title": "Activity Digest",
+          "description": "Personalized daily digest delivered at the start of each user's working hours, summarizing relevant task updates, handoffs, decisions, and items requiring action",
+          "priority": "should"
+        },
+        {
+          "id": "FR-006",
+          "title": "Slack Bot",
+          "description": "Slack integration for querying team availability, creating tasks, and receiving handoff notifications within the team's primary communication tool",
+          "priority": "should"
+        },
+        {
+          "id": "FR-007",
+          "title": "Collaboration Metrics",
+          "description": "Dashboard showing handoff turnaround times, cross-timezone response latencies, and meeting fairness scores",
+          "priority": "could"
+        }
+      ],
+      "non_functional_requirements": [
+        {
+          "id": "NFR-001",
+          "title": "Response Time",
+          "description": "API responses under 500ms at the 95th percentile. Dashboard renders in under 1.5 seconds.",
+          "priority": "must"
+        },
+        {
+          "id": "NFR-002",
+          "title": "Security",
+          "description": "SOC2 Type I aligned security practices. All data encrypted in transit and at rest. OAuth 2.0 for all third-party integrations.",
+          "priority": "must"
+        },
+        {
+          "id": "NFR-003",
+          "title": "Timezone Correctness",
+          "description": "All timezone calculations must use the latest IANA timezone database. DST transitions must be handled correctly for all supported regions. Edge cases (half-hour offsets, regions that do not observe DST) must be explicitly tested.",
+          "priority": "must"
+        },
+        {
+          "id": "NFR-004",
+          "title": "Internationalization",
+          "description": "UI must support date/time formatting according to user locale. Support for right-to-left layouts is desirable but not required for MVP.",
+          "priority": "should"
+        }
+      ],
+      "user_stories": [
+        {
+          "id": "US-001",
+          "as_a": "startup CTO",
+          "i_want": "to see which of my team members are currently online and available across all timezones",
+          "so_that": "I can make real-time decisions about who to pull into an urgent discussion or task",
+          "acceptance_criteria": [
+            "Team map shows real-time availability status for all members",
+            "Current local time is displayed for each timezone group",
+            "Members are visually grouped by timezone proximity",
+            "Status updates are reflected within 30 seconds"
+          ]
+        },
+        {
+          "id": "US-002",
+          "as_a": "distributed product designer",
+          "i_want": "to create a handoff package at the end of my work day that includes design decisions, open questions, and linked files",
+          "so_that": "the engineering team in the next timezone can continue implementation without waiting for me to come back online",
+          "acceptance_criteria": [
+            "Handoff includes a text summary, linked tasks, and file attachments",
+            "Recipients are notified at the start of their working hours",
+            "Handoff has a status tracker: sent, viewed, acknowledged, completed",
+            "Templates can be saved for recurring handoff patterns"
+          ]
+        },
+        {
+          "id": "US-003",
+          "as_a": "startup CTO",
+          "i_want": "to see a report on how meeting times are distributed across timezone groups over the past month",
+          "so_that": "I can identify and correct patterns where certain timezones bear an unfair meeting burden",
+          "acceptance_criteria": [
+            "Report shows meeting count and total hours per timezone group",
+            "Fairness score indicates how evenly meetings are distributed",
+            "Report can be filtered by meeting type (standup, review, planning)",
+            "Recommendations are provided for rebalancing meeting times"
+          ]
+        },
+        {
+          "id": "US-004",
+          "as_a": "remote individual contributor",
+          "i_want": "to receive a morning digest of everything that happened on my projects while I was offline",
+          "so_that": "I can start my work day informed and focused without scrolling through hours of notifications",
+          "acceptance_criteria": [
+            "Digest is delivered at the configured start of working hours",
+            "Content is prioritized: action items first, then decisions, then informational updates",
+            "Digest includes links to relevant tasks, handoffs, and discussions",
+            "Users can customize digest content and delivery format"
+          ]
+        }
+      ],
+      "feature_priorities": [
+        {
+          "feature": "Team Timezone Map and Availability",
+          "priority": "must",
+          "rationale": "The hero feature that demonstrates value in the first 30 seconds. Essential for product-led growth."
+        },
+        {
+          "feature": "Task Management with Timezone Context",
+          "priority": "must",
+          "rationale": "The daily-use foundation. Without it, the product is a dashboard rather than a workflow tool."
+        },
+        {
+          "feature": "Async Handoff Workflows",
+          "priority": "must",
+          "rationale": "The highest-value unique capability. Addresses the most painful unmet need in the market."
+        },
+        {
+          "feature": "Meeting Scheduler",
+          "priority": "should",
+          "rationale": "High frequency use case that drives habit formation and daily engagement."
+        },
+        {
+          "feature": "Activity Digest",
+          "priority": "should",
+          "rationale": "Important for retention — ensures value delivery even on days without active task management."
+        },
+        {
+          "feature": "Slack Integration",
+          "priority": "should",
+          "rationale": "Key adoption driver that meets users in their existing workflow."
+        },
+        {
+          "feature": "Collaboration Metrics",
+          "priority": "could",
+          "rationale": "Premium feature for team leads and management. Strong upsell potential but not required for core value."
+        }
+      ],
+      "success_metrics": [
+        "60% of new teams set up their timezone map and add all members within the first day",
+        "Teams that use handoffs show 40% faster cross-timezone turnaround times within 30 days",
+        "Weekly active user rate exceeds 80% among team members in the first 60 days",
+        "Trial-to-paid conversion rate of 6% or higher for teams using the product for 14+ days",
+        "Average session duration exceeds 5 minutes, indicating active use beyond passive dashboard viewing",
+        "Customer acquisition cost below $150 per team within the first year"
+      ],
+      "out_of_scope": [
+        "Real-time chat or video conferencing",
+        "Resource planning, budgeting, or invoicing",
+        "Custom automation rules or workflow scripting",
+        "Native desktop or mobile applications in the initial release",
+        "Self-hosted or on-premise deployment",
+        "Multi-language UI support beyond English in the initial release"
+      ]
+    }
+  ]
+}

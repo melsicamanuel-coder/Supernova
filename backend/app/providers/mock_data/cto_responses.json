@@ -1,0 +1,302 @@
+{
+  "responses": [
+    {
+      "overview": "{{project_name}} is architected as a modern web application with a clear client-server separation. The frontend is a single-page application communicating with a RESTful API backend. Real-time features (team availability, handoff notifications) are delivered via WebSocket connections. The system is designed for horizontal scalability, with stateless application servers behind a load balancer and a managed PostgreSQL database for persistence. Timezone calculations are centralized in a dedicated service module to ensure correctness and testability.",
+      "tech_stack": [
+        {
+          "category": "Frontend Framework",
+          "choice": "Next.js 14 with TypeScript",
+          "rationale": "Server-side rendering for SEO and initial load performance. TypeScript provides type safety across the frontend codebase. Strong ecosystem of compatible libraries and active community."
+        },
+        {
+          "category": "UI Component Library",
+          "choice": "Tailwind CSS with Radix UI primitives",
+          "rationale": "Tailwind enables rapid iteration on design without context-switching to CSS files. Radix provides accessible, unstyled primitives for complex components like date pickers and dropdowns."
+        },
+        {
+          "category": "Backend Framework",
+          "choice": "FastAPI (Python 3.12)",
+          "rationale": "High-performance async framework with automatic OpenAPI documentation. Python has excellent timezone handling libraries (pytz, zoneinfo). Type hints align with Pydantic for request/response validation."
+        },
+        {
+          "category": "Database",
+          "choice": "PostgreSQL 16",
+          "rationale": "Robust timezone-aware datetime types (TIMESTAMPTZ). JSONB support for flexible schema evolution. Strong indexing capabilities for query performance. Proven at scale."
+        },
+        {
+          "category": "ORM",
+          "choice": "SQLAlchemy 2.0 with async support",
+          "rationale": "Mature ORM with excellent PostgreSQL support. Async session support aligns with FastAPI's async architecture. Alembic for migration management."
+        },
+        {
+          "category": "Real-Time Communication",
+          "choice": "WebSocket via FastAPI + Redis Pub/Sub",
+          "rationale": "WebSocket provides low-latency bidirectional communication for live availability updates. Redis Pub/Sub enables broadcasting across multiple application server instances."
+        },
+        {
+          "category": "Task Queue",
+          "choice": "Celery with Redis broker",
+          "rationale": "Handles background tasks: notification delivery, digest generation, calendar sync polling. Redis serves double duty as cache and message broker."
+        },
+        {
+          "category": "Timezone Library",
+          "choice": "Python zoneinfo (stdlib) + IANA tzdata",
+          "rationale": "Standard library module using the IANA timezone database. No third-party dependency for core timezone logic. Automatically updated via system package manager."
+        },
+        {
+          "category": "Authentication",
+          "choice": "Auth0 or Clerk",
+          "rationale": "Managed authentication reduces security surface area. Supports OAuth for third-party integrations (Google Calendar, Slack). SSO support for enterprise customers."
+        }
+      ],
+      "system_components": [
+        {
+          "name": "API Gateway",
+          "responsibility": "Request routing, authentication middleware, rate limiting, CORS handling, and request logging",
+          "tech": "FastAPI with Starlette middleware",
+          "interfaces": ["Frontend SPA", "Slack Bot", "Mobile Client (future)"]
+        },
+        {
+          "name": "Timezone Engine",
+          "responsibility": "All timezone calculations: overlap computation, working hours validation, DST-aware scheduling, and timezone conversion. Centralized to ensure consistent handling across the application.",
+          "tech": "Python zoneinfo, custom calculation module",
+          "interfaces": ["API Gateway", "Task Scheduler", "Notification Service"]
+        },
+        {
+          "name": "Task Management Service",
+          "responsibility": "CRUD operations for tasks, projects, and assignments. Timezone-aware deadline validation. Task state machine management.",
+          "tech": "FastAPI routes + SQLAlchemy",
+          "interfaces": ["API Gateway", "Timezone Engine", "Notification Service"]
+        },
+        {
+          "name": "Handoff Service",
+          "responsibility": "Creating, tracking, and delivering async handoff packages between timezone groups. Context bundling and status lifecycle management.",
+          "tech": "FastAPI routes + Celery tasks",
+          "interfaces": ["API Gateway", "Notification Service", "Timezone Engine"]
+        },
+        {
+          "name": "Notification Service",
+          "responsibility": "Queue-based notification delivery respecting recipient working hours. Supports in-app, email, and Slack channels. Generates morning digest compilations.",
+          "tech": "Celery + Redis + SendGrid (email)",
+          "interfaces": ["Task Management", "Handoff Service", "Slack Integration"]
+        },
+        {
+          "name": "Real-Time Presence",
+          "responsibility": "Tracking and broadcasting team member online/offline/busy status. Powering the live team timezone map.",
+          "tech": "WebSocket + Redis Pub/Sub",
+          "interfaces": ["Frontend SPA", "API Gateway"]
+        },
+        {
+          "name": "Integration Hub",
+          "responsibility": "Managing OAuth connections and data synchronization with third-party platforms (Slack, Google Calendar, GitHub)",
+          "tech": "FastAPI routes + httpx for API calls + Celery for sync jobs",
+          "interfaces": ["API Gateway", "Task Management", "Handoff Service"]
+        }
+      ],
+      "data_model": [
+        {
+          "entity": "Organization",
+          "fields": ["id (UUID)", "name (VARCHAR)", "slug (VARCHAR UNIQUE)", "settings (JSONB)", "created_at (TIMESTAMPTZ)"],
+          "relationships": ["has many Teams", "has many Members"]
+        },
+        {
+          "entity": "Team",
+          "fields": ["id (UUID)", "org_id (FK → Organization)", "name (VARCHAR)", "settings (JSONB)", "created_at (TIMESTAMPTZ)"],
+          "relationships": ["belongs to Organization", "has many Members via TeamMembership", "has many Tasks", "has many Handoffs"]
+        },
+        {
+          "entity": "Member",
+          "fields": ["id (UUID)", "org_id (FK → Organization)", "email (VARCHAR)", "display_name (VARCHAR)", "timezone (VARCHAR)", "working_hours (JSONB)", "notification_preferences (JSONB)", "created_at (TIMESTAMPTZ)"],
+          "relationships": ["belongs to Organization", "belongs to many Teams via TeamMembership", "has many assigned Tasks", "has many Handoffs authored"]
+        },
+        {
+          "entity": "Task",
+          "fields": ["id (UUID)", "team_id (FK → Team)", "title (VARCHAR)", "description (TEXT)", "status (ENUM)", "priority (ENUM)", "assignee_id (FK → Member)", "due_at (TIMESTAMPTZ)", "created_by (FK → Member)", "created_at (TIMESTAMPTZ)", "updated_at (TIMESTAMPTZ)"],
+          "relationships": ["belongs to Team", "assigned to Member", "linked to many Handoffs"]
+        },
+        {
+          "entity": "Handoff",
+          "fields": ["id (UUID)", "team_id (FK → Team)", "author_id (FK → Member)", "summary (TEXT)", "context (JSONB)", "status (ENUM)", "target_timezone_group (VARCHAR[])", "created_at (TIMESTAMPTZ)", "acknowledged_at (TIMESTAMPTZ)"],
+          "relationships": ["belongs to Team", "authored by Member", "links to many Tasks"]
+        },
+        {
+          "entity": "Meeting",
+          "fields": ["id (UUID)", "team_id (FK → Team)", "title (VARCHAR)", "scheduled_at (TIMESTAMPTZ)", "duration_minutes (INT)", "participant_ids (UUID[])", "timezone_fairness_score (FLOAT)", "created_at (TIMESTAMPTZ)"],
+          "relationships": ["belongs to Team", "has many Members as participants"]
+        }
+      ],
+      "api_design": [
+        {"method": "POST", "path": "/api/v1/auth/login", "description": "Authenticate user and return JWT tokens"},
+        {"method": "GET", "path": "/api/v1/teams/{team_id}/timezone-map", "description": "Get team timezone overlap heatmap data"},
+        {"method": "GET", "path": "/api/v1/teams/{team_id}/availability", "description": "Get real-time team member availability"},
+        {"method": "POST", "path": "/api/v1/tasks", "description": "Create a new task with timezone-aware validation"},
+        {"method": "PATCH", "path": "/api/v1/tasks/{task_id}", "description": "Update task fields including assignment and deadline"},
+        {"method": "GET", "path": "/api/v1/tasks", "description": "List tasks with filtering by assignee, status, and timezone context"},
+        {"method": "POST", "path": "/api/v1/handoffs", "description": "Create an async handoff package"},
+        {"method": "PATCH", "path": "/api/v1/handoffs/{handoff_id}/acknowledge", "description": "Mark a handoff as acknowledged by the receiving team"},
+        {"method": "GET", "path": "/api/v1/scheduling/suggest", "description": "Get timezone-optimized meeting time suggestions"},
+        {"method": "GET", "path": "/api/v1/analytics/timezone-health", "description": "Get timezone collaboration health metrics"},
+        {"method": "WS", "path": "/ws/presence/{team_id}", "description": "WebSocket for real-time team presence updates"}
+      ],
+      "infrastructure": {
+        "hosting": "AWS ECS Fargate for containerized application services. RDS PostgreSQL for managed database. ElastiCache Redis for caching and pub/sub. S3 for file storage. CloudFront CDN for static assets.",
+        "ci_cd": "GitHub Actions for CI/CD pipeline. Automated testing on pull requests. Staging deployment on merge to develop branch. Production deployment on release tags with manual approval gate.",
+        "monitoring": "Datadog for application metrics, distributed tracing, and log aggregation. PagerDuty for on-call alerting. Sentry for frontend and backend error tracking. Custom dashboard for timezone-specific operational metrics.",
+        "estimated_cost": "Development phase: ~$200/month (minimal infrastructure). Launch phase (up to 1000 users): ~$800/month. Growth phase (up to 10,000 users): ~$2,500/month. Costs scale primarily with database size and real-time connection count."
+      },
+      "security_considerations": [
+        "All API endpoints require authentication via JWT with short-lived access tokens and refresh token rotation",
+        "OAuth 2.0 with PKCE for all third-party integrations, with scoped permissions requesting minimal access",
+        "Calendar data is processed in memory and not persisted beyond the sync operation — only free/busy status is stored",
+        "Row-level security in PostgreSQL ensures organization data isolation at the database level",
+        "Rate limiting on all public-facing endpoints: 100 requests/minute for authenticated users, 10/minute for unauthenticated",
+        "Input validation via Pydantic models on all API endpoints, with strict type coercion disabled",
+        "WebSocket connections authenticated via token in the initial handshake, with periodic re-authentication",
+        "All sensitive configuration via environment variables, never committed to version control"
+      ],
+      "scalability_notes": "The architecture supports horizontal scaling at every layer. Application servers are stateless — session data is stored in Redis, enabling seamless load balancing. PostgreSQL handles read scaling via read replicas; write scaling is addressed by table partitioning on organization_id if needed. Redis Pub/Sub enables WebSocket broadcasting across multiple server instances. The timezone calculation engine is CPU-bound but lightweight — overlap computations for a 100-person team complete in under 50ms. The primary scaling bottleneck is expected to be WebSocket connection count, addressable by dedicated WebSocket server instances behind a connection-aware load balancer.",
+      "deployment_strategy": "Docker containers orchestrated via ECS Fargate. Blue-green deployments for zero-downtime releases. Database migrations run as a pre-deployment step with automatic rollback on failure. Feature flags via LaunchDarkly for gradual rollout of new capabilities. Separate staging environment mirroring production topology for integration testing. Infrastructure defined as code via Terraform."
+    },
+    {
+      "overview": "{{project_name}} follows a modular monolith architecture, optimized for development velocity and operational simplicity at early scale. The application is structured as a single deployable unit with well-defined internal module boundaries, making it straightforward to extract services later if scaling demands it. The core innovation — timezone-aware workflow primitives — is encapsulated in a dedicated domain module that all other modules depend on.",
+      "tech_stack": [
+        {
+          "category": "Frontend",
+          "choice": "React 18 with TypeScript and Vite",
+          "rationale": "React's component model suits the interactive timezone visualizations. Vite provides fast development builds. TypeScript ensures type safety across the frontend."
+        },
+        {
+          "category": "Styling",
+          "choice": "Tailwind CSS 3",
+          "rationale": "Utility-first approach accelerates UI development. Consistent design tokens via configuration. Small production bundle via PurgeCSS."
+        },
+        {
+          "category": "Backend",
+          "choice": "Node.js with Express and TypeScript",
+          "rationale": "Shared TypeScript types between frontend and backend eliminate schema drift. Excellent WebSocket support via Socket.io. Rich npm ecosystem for timezone handling (Luxon, date-fns-tz)."
+        },
+        {
+          "category": "Database",
+          "choice": "PostgreSQL 16 with Prisma ORM",
+          "rationale": "Type-safe database queries via Prisma. Automatic migration generation. PostgreSQL's TIMESTAMPTZ ensures correct timezone storage."
+        },
+        {
+          "category": "Real-Time",
+          "choice": "Socket.io",
+          "rationale": "Mature WebSocket library with automatic fallback to long-polling. Room-based broadcasting maps naturally to team channels. Client-side reconnection handling built in."
+        },
+        {
+          "category": "Background Jobs",
+          "choice": "BullMQ with Redis",
+          "rationale": "TypeScript-native job queue. Scheduled jobs for digest generation. Retry logic with exponential backoff for integration sync."
+        },
+        {
+          "category": "Timezone",
+          "choice": "Luxon (ICU-based timezone support)",
+          "rationale": "Built on the Intl API and ICU timezone data. Handles DST transitions, half-hour offsets, and locale-aware formatting. No separate timezone database dependency."
+        },
+        {
+          "category": "Authentication",
+          "choice": "Passport.js with JWT strategy",
+          "rationale": "Flexible authentication middleware. JWT for stateless API authentication. Extensible to support OAuth providers for SSO."
+        }
+      ],
+      "system_components": [
+        {
+          "name": "Web Application",
+          "responsibility": "Serves the React SPA, handles SSR for initial page loads, and proxies API requests in development",
+          "tech": "Vite dev server / Nginx in production",
+          "interfaces": ["User Browser"]
+        },
+        {
+          "name": "API Server",
+          "responsibility": "RESTful API for all CRUD operations, authentication, and business logic. WebSocket server for real-time updates.",
+          "tech": "Express + Socket.io on Node.js",
+          "interfaces": ["Web Application", "Slack App", "Calendar Webhooks"]
+        },
+        {
+          "name": "Timezone Domain Module",
+          "responsibility": "Pure functions for all timezone calculations: overlap computation, working hours validation, scheduling optimization, DST-aware date arithmetic",
+          "tech": "TypeScript module using Luxon",
+          "interfaces": ["API Server (imported as module)"]
+        },
+        {
+          "name": "Task Module",
+          "responsibility": "Task lifecycle management with timezone-aware validation, assignment, and deadline handling",
+          "tech": "Express routes + Prisma queries",
+          "interfaces": ["API Server", "Timezone Domain Module"]
+        },
+        {
+          "name": "Handoff Module",
+          "responsibility": "Async handoff creation, delivery scheduling, and status tracking",
+          "tech": "Express routes + BullMQ scheduled jobs",
+          "interfaces": ["API Server", "Timezone Domain Module", "Notification Module"]
+        },
+        {
+          "name": "Notification Module",
+          "responsibility": "Working-hours-aware notification delivery across in-app, email, and Slack channels",
+          "tech": "BullMQ workers + Nodemailer + Slack API",
+          "interfaces": ["Handoff Module", "Task Module"]
+        }
+      ],
+      "data_model": [
+        {
+          "entity": "Workspace",
+          "fields": ["id (UUID)", "name (String)", "slug (String @unique)", "plan (Enum: free/pro/enterprise)", "createdAt (DateTime)"],
+          "relationships": ["has many Teams", "has many Users"]
+        },
+        {
+          "entity": "User",
+          "fields": ["id (UUID)", "workspaceId (FK → Workspace)", "email (String @unique)", "name (String)", "timezone (String)", "workingHours (Json)", "avatarUrl (String?)", "createdAt (DateTime)"],
+          "relationships": ["belongs to Workspace", "member of many Teams", "assigned to many Tasks"]
+        },
+        {
+          "entity": "Team",
+          "fields": ["id (UUID)", "workspaceId (FK → Workspace)", "name (String)", "description (String?)", "createdAt (DateTime)"],
+          "relationships": ["belongs to Workspace", "has many Users", "has many Tasks", "has many Handoffs"]
+        },
+        {
+          "entity": "Task",
+          "fields": ["id (UUID)", "teamId (FK → Team)", "title (String)", "description (String?)", "status (Enum)", "priority (Enum)", "assigneeId (FK → User?)", "dueAt (DateTime?)", "createdById (FK → User)", "createdAt (DateTime)", "updatedAt (DateTime)"],
+          "relationships": ["belongs to Team", "assigned to User", "created by User"]
+        },
+        {
+          "entity": "Handoff",
+          "fields": ["id (UUID)", "teamId (FK → Team)", "authorId (FK → User)", "summary (String)", "context (Json)", "status (Enum: draft/sent/viewed/acknowledged/completed)", "createdAt (DateTime)"],
+          "relationships": ["belongs to Team", "authored by User", "references many Tasks"]
+        }
+      ],
+      "api_design": [
+        {"method": "POST", "path": "/api/auth/register", "description": "Register workspace and first admin user"},
+        {"method": "POST", "path": "/api/auth/login", "description": "Authenticate and receive JWT"},
+        {"method": "GET", "path": "/api/teams/:teamId/overlap", "description": "Compute timezone overlap heatmap for team"},
+        {"method": "GET", "path": "/api/teams/:teamId/members/status", "description": "Current working/offline status for all members"},
+        {"method": "POST", "path": "/api/tasks", "description": "Create task with timezone validation"},
+        {"method": "GET", "path": "/api/tasks", "description": "List tasks with timezone context annotations"},
+        {"method": "PATCH", "path": "/api/tasks/:id", "description": "Update task"},
+        {"method": "POST", "path": "/api/handoffs", "description": "Create async handoff"},
+        {"method": "PATCH", "path": "/api/handoffs/:id/status", "description": "Update handoff lifecycle status"},
+        {"method": "GET", "path": "/api/scheduling/suggest", "description": "Suggest fair meeting times for participants"},
+        {"method": "GET", "path": "/api/metrics/collaboration", "description": "Timezone collaboration health metrics"}
+      ],
+      "infrastructure": {
+        "hosting": "Railway or Render for the initial deployment. Single-container application with PostgreSQL and Redis add-ons. Upgrade to AWS/GCP Kubernetes when scaling beyond 5,000 concurrent users.",
+        "ci_cd": "GitHub Actions: lint, type-check, test, build on every PR. Automatic deployment to staging on merge to main. Manual promotion to production with Slack approval.",
+        "monitoring": "Application logging via Pino (structured JSON logs). Metrics collection via Prometheus with Grafana dashboards. Error tracking via Sentry. Uptime monitoring via BetterStack.",
+        "estimated_cost": "Development/Beta: ~$50/month (Railway starter plan). Launch (up to 2,000 users): ~$300/month. Growth (up to 10,000 users): ~$1,200/month."
+      },
+      "security_considerations": [
+        "JWT tokens with 15-minute expiry and secure HTTP-only refresh cookies",
+        "Prisma parameterized queries prevent SQL injection by default",
+        "Input validation via Zod schemas on all API endpoints",
+        "CORS restricted to known frontend origins",
+        "Workspace-scoped data access enforced at the query layer — every database query includes workspace_id filter",
+        "OAuth tokens for third-party integrations encrypted at rest using AES-256",
+        "WebSocket authentication via token verification on connection upgrade",
+        "Dependency vulnerability scanning via GitHub Dependabot and npm audit in CI"
+      ],
+      "scalability_notes": "The modular monolith starts as a single process handling HTTP, WebSocket, and background jobs. At scale, these can be separated: dedicated WebSocket servers for real-time presence, separate worker processes for background jobs (digests, sync), and multiple API server instances behind a load balancer. PostgreSQL connection pooling via PgBouncer handles database connection scaling. The timezone calculation module is stateless and CPU-bound — it scales linearly with application instances. Redis handles pub/sub for cross-instance WebSocket broadcasting. Expected bottleneck at scale is WebSocket connection count, addressable by Socket.io's Redis adapter for multi-server broadcasting.",
+      "deployment_strategy": "Containerized via Docker. Initial deployment as a single container on Railway with zero-config PostgreSQL and Redis. Database migrations via Prisma migrate, run as a release command before the new version starts. Feature flags via environment variables for progressive rollout. Health check endpoint at /health for load balancer integration. Automatic rollback if health check fails within 60 seconds of deployment."
+    }
+  ]
+}

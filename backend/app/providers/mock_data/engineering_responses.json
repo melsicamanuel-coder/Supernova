@@ -1,0 +1,416 @@
+{
+  "responses": [
+    {
+      "total_tasks": 18,
+      "estimated_hours": 312,
+      "phases": [
+        {
+          "name": "Foundation",
+          "description": "Project setup, core infrastructure, database schema, authentication, and basic API scaffolding",
+          "duration_weeks": 2
+        },
+        {
+          "name": "Core Features",
+          "description": "Timezone engine, task management with timezone awareness, team management, and the timezone overlap heatmap",
+          "duration_weeks": 3
+        },
+        {
+          "name": "Collaboration",
+          "description": "Async handoff workflows, notification system with working-hours scheduling, and real-time presence via WebSocket",
+          "duration_weeks": 3
+        },
+        {
+          "name": "Integration & Polish",
+          "description": "Slack integration, calendar sync, meeting scheduler, analytics dashboard, and end-to-end testing",
+          "duration_weeks": 2
+        }
+      ],
+      "tasks": [
+        {
+          "id": "T-001",
+          "title": "Project Repository and CI Setup",
+          "description": "Initialize monorepo structure with frontend and backend workspaces. Configure ESLint, Prettier, TypeScript, and GitHub Actions CI pipeline with lint, type-check, and test stages.",
+          "phase": "Foundation",
+          "complexity": "simple",
+          "priority": "critical",
+          "estimated_hours": 6,
+          "dependencies": []
+        },
+        {
+          "id": "T-002",
+          "title": "Database Schema and Migrations",
+          "description": "Define the initial database schema for organizations, teams, members, tasks, handoffs, and meetings. Set up migration tooling and seed data scripts for development.",
+          "phase": "Foundation",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 12,
+          "dependencies": ["T-001"]
+        },
+        {
+          "id": "T-003",
+          "title": "Authentication and Authorization",
+          "description": "Implement JWT-based authentication with signup, login, token refresh, and password reset flows. Add workspace-scoped authorization middleware that ensures data isolation.",
+          "phase": "Foundation",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 16,
+          "dependencies": ["T-002"]
+        },
+        {
+          "id": "T-004",
+          "title": "API Scaffolding and Middleware",
+          "description": "Set up Express application with route organization, error handling middleware, request validation, logging, and CORS configuration. Create the health check endpoint.",
+          "phase": "Foundation",
+          "complexity": "simple",
+          "priority": "critical",
+          "estimated_hours": 8,
+          "dependencies": ["T-001"]
+        },
+        {
+          "id": "T-005",
+          "title": "Frontend Application Shell",
+          "description": "Initialize the React application with routing, layout components (sidebar, header, content area), theme configuration, and the design system foundation. Implement responsive layout.",
+          "phase": "Foundation",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 16,
+          "dependencies": ["T-001"]
+        },
+        {
+          "id": "T-006",
+          "title": "Timezone Calculation Engine",
+          "description": "Build the core timezone module: overlap computation for N members, working hours validation, DST-aware date arithmetic, optimal meeting window calculation. Comprehensive unit test suite covering edge cases (half-hour offsets, DST transitions, date line crossing).",
+          "phase": "Core Features",
+          "complexity": "complex",
+          "priority": "critical",
+          "estimated_hours": 24,
+          "dependencies": ["T-004"]
+        },
+        {
+          "id": "T-007",
+          "title": "Team and Member Management API",
+          "description": "CRUD endpoints for teams and members. Member profile includes timezone, working hours, and notification preferences. Team membership management with role-based access.",
+          "phase": "Core Features",
+          "complexity": "moderate",
+          "priority": "high",
+          "estimated_hours": 16,
+          "dependencies": ["T-003"]
+        },
+        {
+          "id": "T-008",
+          "title": "Timezone Overlap Heatmap",
+          "description": "Frontend interactive heatmap component showing overlapping working hours across team members. Grouped by timezone. Click to see available members per time slot. Auto-updates on team composition changes.",
+          "phase": "Core Features",
+          "complexity": "complex",
+          "priority": "critical",
+          "estimated_hours": 24,
+          "dependencies": ["T-005", "T-006", "T-007"]
+        },
+        {
+          "id": "T-009",
+          "title": "Task Management API",
+          "description": "Full task CRUD with timezone-aware features: deadline validation against assignee working hours, local time display, timezone-relative sorting. Task state machine (todo, in_progress, review, done).",
+          "phase": "Core Features",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 20,
+          "dependencies": ["T-006", "T-007"]
+        },
+        {
+          "id": "T-010",
+          "title": "Task Board UI",
+          "description": "Kanban board with timezone context: assignee local time, time-to-deadline in assignee timezone, working-hours warning badges. Drag-and-drop status updates. Filter by assignee, priority, and timezone group.",
+          "phase": "Core Features",
+          "complexity": "moderate",
+          "priority": "high",
+          "estimated_hours": 20,
+          "dependencies": ["T-005", "T-009"]
+        },
+        {
+          "id": "T-011",
+          "title": "Async Handoff Workflow Backend",
+          "description": "API for creating handoff packages with structured summaries, linked tasks, and context notes. Handoff lifecycle management (draft, sent, viewed, acknowledged, completed). Scheduled delivery aligned to recipient working hours.",
+          "phase": "Collaboration",
+          "complexity": "complex",
+          "priority": "critical",
+          "estimated_hours": 24,
+          "dependencies": ["T-006", "T-009"]
+        },
+        {
+          "id": "T-012",
+          "title": "Handoff UI",
+          "description": "Frontend for creating, viewing, and managing handoffs. Handoff creation form with task linking and context editor. Inbox view for received handoffs. Status tracking timeline.",
+          "phase": "Collaboration",
+          "complexity": "moderate",
+          "priority": "high",
+          "estimated_hours": 18,
+          "dependencies": ["T-005", "T-011"]
+        },
+        {
+          "id": "T-013",
+          "title": "Notification Service",
+          "description": "Background job system for notification delivery. Working-hours-aware queuing: non-urgent notifications batched for delivery at recipient's working hours start. Urgent override capability. Support for in-app and email channels.",
+          "phase": "Collaboration",
+          "complexity": "complex",
+          "priority": "high",
+          "estimated_hours": 22,
+          "dependencies": ["T-006", "T-007"]
+        },
+        {
+          "id": "T-014",
+          "title": "WebSocket Real-Time Presence",
+          "description": "WebSocket server for live team member presence (online/offline/busy). Room-based broadcasting per team. Client-side reconnection with exponential backoff. Presence status displayed on team timezone map.",
+          "phase": "Collaboration",
+          "complexity": "moderate",
+          "priority": "high",
+          "estimated_hours": 16,
+          "dependencies": ["T-004", "T-007"]
+        },
+        {
+          "id": "T-015",
+          "title": "Slack Integration",
+          "description": "Slack app with bot capabilities: post task updates to channels, create tasks from slash commands, query timezone overlap. OAuth installation flow. Channel-to-team mapping configuration.",
+          "phase": "Integration & Polish",
+          "complexity": "complex",
+          "priority": "medium",
+          "estimated_hours": 24,
+          "dependencies": ["T-009", "T-006"]
+        },
+        {
+          "id": "T-016",
+          "title": "Calendar Integration",
+          "description": "Google Calendar and Outlook calendar read-only integration via OAuth. Sync free/busy data for scheduling optimization. Periodic background sync with conflict detection.",
+          "phase": "Integration & Polish",
+          "complexity": "complex",
+          "priority": "medium",
+          "estimated_hours": 22,
+          "dependencies": ["T-003", "T-006"]
+        },
+        {
+          "id": "T-017",
+          "title": "Smart Meeting Scheduler",
+          "description": "Meeting time suggestion engine using timezone overlap data and calendar availability. Fairness scoring to track meeting time distribution across timezone groups. Frontend scheduling interface with participant availability visualization.",
+          "phase": "Integration & Polish",
+          "complexity": "moderate",
+          "priority": "medium",
+          "estimated_hours": 18,
+          "dependencies": ["T-006", "T-016"]
+        },
+        {
+          "id": "T-018",
+          "title": "End-to-End Testing and QA",
+          "description": "Comprehensive test suite: unit tests for timezone engine, integration tests for API endpoints, E2E tests for critical user flows (signup → create team → assign task → handoff). Load testing for WebSocket connections. Timezone edge case regression suite.",
+          "phase": "Integration & Polish",
+          "complexity": "moderate",
+          "priority": "high",
+          "estimated_hours": 26,
+          "dependencies": ["T-008", "T-010", "T-012", "T-014"]
+        }
+      ],
+      "critical_path": ["T-001", "T-002", "T-003", "T-007", "T-006", "T-008", "T-009", "T-011", "T-018"],
+      "risk_areas": [
+        "Timezone edge cases (DST transitions, political timezone changes, half-hour offsets) could introduce subtle bugs that erode user trust",
+        "WebSocket scaling with many concurrent team connections may require architectural changes earlier than planned",
+        "Third-party API rate limits on Google Calendar and Slack could impact sync reliability for large organizations",
+        "The timezone overlap computation becomes expensive for very large teams (200+ members) and may need caching or incremental updates",
+        "Handoff workflow complexity could expand significantly once real users provide feedback on edge cases (partial handoffs, rejected handoffs, multi-team handoffs)"
+      ]
+    },
+    {
+      "total_tasks": 16,
+      "estimated_hours": 276,
+      "phases": [
+        {
+          "name": "Setup",
+          "description": "Repository initialization, development environment, database design, and deployment pipeline",
+          "duration_weeks": 1
+        },
+        {
+          "name": "Platform Core",
+          "description": "Authentication, team management, timezone engine, task management, and the primary UI components",
+          "duration_weeks": 4
+        },
+        {
+          "name": "Async Workflows",
+          "description": "Handoff system, notification scheduling, real-time presence, and morning digest generation",
+          "duration_weeks": 3
+        },
+        {
+          "name": "Launch Preparation",
+          "description": "Integrations, analytics, testing, documentation, and performance optimization",
+          "duration_weeks": 2
+        }
+      ],
+      "tasks": [
+        {
+          "id": "E-001",
+          "title": "Development Environment and CI",
+          "description": "Set up monorepo with pnpm workspaces. Docker Compose for local development (database, Redis). GitHub Actions CI with parallel lint, test, and build jobs.",
+          "phase": "Setup",
+          "complexity": "simple",
+          "priority": "critical",
+          "estimated_hours": 8,
+          "dependencies": []
+        },
+        {
+          "id": "E-002",
+          "title": "Database Design and ORM Setup",
+          "description": "Design and implement the database schema using Prisma. Create all models, relationships, and indexes. Write seed scripts for development data. Generate and test initial migration.",
+          "phase": "Setup",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 14,
+          "dependencies": ["E-001"]
+        },
+        {
+          "id": "E-003",
+          "title": "User Authentication System",
+          "description": "JWT authentication with secure token handling. Registration, login, token refresh, and session management. Middleware for protected routes. Workspace-scoped authorization.",
+          "phase": "Platform Core",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 18,
+          "dependencies": ["E-002"]
+        },
+        {
+          "id": "E-004",
+          "title": "Team and Member Management",
+          "description": "CRUD APIs for teams and members. Member profiles with timezone, working hours, and preferences. Team invitations and role management. Member search with timezone filtering.",
+          "phase": "Platform Core",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 16,
+          "dependencies": ["E-003"]
+        },
+        {
+          "id": "E-005",
+          "title": "Timezone Calculation Library",
+          "description": "Core library for timezone operations: multi-member overlap calculation, working hours window computation, DST-aware scheduling, and timezone conversion utilities. Property-based tests for correctness.",
+          "phase": "Platform Core",
+          "complexity": "complex",
+          "priority": "critical",
+          "estimated_hours": 20,
+          "dependencies": ["E-001"]
+        },
+        {
+          "id": "E-006",
+          "title": "Task Management System",
+          "description": "Task CRUD with assignment, priorities, and status workflow. Timezone-aware deadline handling: warns on out-of-hours deadlines, shows local times per assignee. Bulk operations support.",
+          "phase": "Platform Core",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 20,
+          "dependencies": ["E-004", "E-005"]
+        },
+        {
+          "id": "E-007",
+          "title": "Frontend Application Foundation",
+          "description": "React app with routing, theme, layout system, and shared components. Design tokens for the visual style. Responsive sidebar navigation. API client with authentication handling.",
+          "phase": "Platform Core",
+          "complexity": "moderate",
+          "priority": "critical",
+          "estimated_hours": 18,
+          "dependencies": ["E-001"]
+        },
+        {
+          "id": "E-008",
+          "title": "Timezone Overlap Dashboard UI",
+          "description": "Interactive timezone heatmap showing team availability windows. Member cards with local time and status. Timezone group clustering with visual overlap bands. Click-through to member details.",
+          "phase": "Platform Core",
+          "complexity": "complex",
+          "priority": "critical",
+          "estimated_hours": 22,
+          "dependencies": ["E-005", "E-007", "E-004"]
+        },
+        {
+          "id": "E-009",
+          "title": "Task Board Interface",
+          "description": "Kanban board with timezone annotations per card. Drag-and-drop task status updates. Assignee timezone indicators. Due date warnings for timezone conflicts. Responsive for tablet and desktop.",
+          "phase": "Platform Core",
+          "complexity": "moderate",
+          "priority": "high",
+          "estimated_hours": 20,
+          "dependencies": ["E-006", "E-007"]
+        },
+        {
+          "id": "E-010",
+          "title": "Async Handoff Engine",
+          "description": "Backend service for handoff lifecycle: creation with structured context, scheduled delivery based on target timezone working hours, status tracking, and handoff history. Background job for timed delivery.",
+          "phase": "Async Workflows",
+          "complexity": "complex",
+          "priority": "critical",
+          "estimated_hours": 22,
+          "dependencies": ["E-005", "E-006"]
+        },
+        {
+          "id": "E-011",
+          "title": "Handoff Interface",
+          "description": "Handoff creation form with context editor and task linking. Handoff inbox showing received handoffs with status. Timeline view of handoff history. Acknowledgment and completion flows.",
+          "phase": "Async Workflows",
+          "complexity": "moderate",
+          "priority": "high",
+          "estimated_hours": 16,
+          "dependencies": ["E-007", "E-010"]
+        },
+        {
+          "id": "E-012",
+          "title": "Working-Hours Notification System",
+          "description": "Notification queue that respects recipient working hours. Urgent/non-urgent classification. Morning digest aggregation job. In-app notification center. Email delivery for offline users.",
+          "phase": "Async Workflows",
+          "complexity": "complex",
+          "priority": "high",
+          "estimated_hours": 20,
+          "dependencies": ["E-005", "E-004"]
+        },
+        {
+          "id": "E-013",
+          "title": "Real-Time Presence System",
+          "description": "WebSocket server for live member status broadcasting. Automatic online/offline detection based on connection state. Heartbeat mechanism. Integration with the timezone dashboard for live status indicators.",
+          "phase": "Async Workflows",
+          "complexity": "moderate",
+          "priority": "medium",
+          "estimated_hours": 14,
+          "dependencies": ["E-004", "E-007"]
+        },
+        {
+          "id": "E-014",
+          "title": "Slack Integration",
+          "description": "Slack app with slash commands for task creation and timezone queries. Channel notifications for task updates and handoff deliveries. OAuth installation flow. Workspace-to-team mapping.",
+          "phase": "Launch Preparation",
+          "complexity": "complex",
+          "priority": "medium",
+          "estimated_hours": 20,
+          "dependencies": ["E-006", "E-010"]
+        },
+        {
+          "id": "E-015",
+          "title": "Analytics and Metrics Dashboard",
+          "description": "Collaboration health metrics: handoff turnaround time, cross-timezone response latency, meeting fairness score. Charts for timezone utilization trends. Exportable reports for team leads.",
+          "phase": "Launch Preparation",
+          "complexity": "moderate",
+          "priority": "medium",
+          "estimated_hours": 16,
+          "dependencies": ["E-006", "E-010", "E-007"]
+        },
+        {
+          "id": "E-016",
+          "title": "Testing and Quality Assurance",
+          "description": "Unit tests for timezone library (including DST edge cases). API integration tests for all endpoints. E2E test suite for critical flows. Performance benchmarks for overlap calculation and WebSocket throughput.",
+          "phase": "Launch Preparation",
+          "complexity": "moderate",
+          "priority": "high",
+          "estimated_hours": 22,
+          "dependencies": ["E-008", "E-009", "E-011", "E-013"]
+        }
+      ],
+      "critical_path": ["E-001", "E-002", "E-003", "E-004", "E-005", "E-006", "E-010", "E-016"],
+      "risk_areas": [
+        "Timezone library correctness is the single highest-risk component — a bug in overlap calculation undermines the entire product value",
+        "OAuth integration with Google Calendar and Slack requires handling token refresh, permission revocation, and API versioning",
+        "Real-time presence at scale may require dedicated WebSocket infrastructure earlier than anticipated",
+        "Morning digest generation must handle time-of-day edge cases: what if a user changes their timezone? What if working hours span midnight?",
+        "Database query performance for timezone-aware task listing may need query optimization or materialized views for teams with 100+ tasks"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,399 @@
+{
+  "responses": [
+    {
+      "strategy": "The test strategy for {{project_name}} follows a pyramid approach with a reinforced base of unit tests for the timezone calculation engine, a comprehensive integration test layer for API endpoints and background jobs, and targeted end-to-end tests for critical user workflows. Given that timezone correctness is the product's core value proposition, the timezone engine receives disproportionate test investment including property-based testing and an extensive edge case suite. Integration tests validate timezone-aware behavior at the API level, ensuring that database storage, retrieval, and cross-service communication all handle timezones correctly. E2E tests cover the golden path for each major feature: team setup, task assignment, handoff workflow, and meeting scheduling.",
+      "test_categories": [
+        {
+          "name": "Timezone Engine Unit Tests",
+          "description": "Unit tests for the core timezone calculation library covering overlap computation, working hours validation, DST transitions, and timezone conversion. Includes property-based tests that generate random timezone combinations and verify invariants.",
+          "priority": "high"
+        },
+        {
+          "name": "API Integration Tests",
+          "description": "Integration tests for all REST API endpoints using a test database. Validates request/response schemas, authentication and authorization, error handling, and timezone-aware behavior at the HTTP layer.",
+          "priority": "high"
+        },
+        {
+          "name": "Workflow Integration Tests",
+          "description": "Tests for multi-step workflows: task creation → assignment → handoff → acknowledgment → completion. Validates state transitions, notification triggering, and timezone-correct scheduling.",
+          "priority": "high"
+        },
+        {
+          "name": "End-to-End Tests",
+          "description": "Browser-based tests covering critical user journeys: onboarding, team timezone map interaction, task board operations, and handoff creation. Run against a fully deployed test environment.",
+          "priority": "medium"
+        },
+        {
+          "name": "Real-Time Communication Tests",
+          "description": "WebSocket integration tests for presence broadcasting, connection/disconnection handling, reconnection behavior, and message ordering. Load tests for concurrent connection scaling.",
+          "priority": "medium"
+        },
+        {
+          "name": "Third-Party Integration Tests",
+          "description": "Tests for Slack and calendar integrations using recorded HTTP interactions (VCR pattern). Validates OAuth flows, API request formatting, webhook handling, and graceful degradation on API failures.",
+          "priority": "low"
+        }
+      ],
+      "test_scenarios": [
+        {
+          "id": "TS-001",
+          "title": "Timezone overlap calculation for team spanning 5 timezones",
+          "category": "Timezone Engine Unit Tests",
+          "steps": [
+            "Create a team with members in UTC-8 (PST), UTC-5 (EST), UTC+0 (GMT), UTC+5:30 (IST), and UTC+9 (JST)",
+            "Set standard 9am-5pm working hours for all members",
+            "Calculate overlap windows",
+            "Verify that the maximum overlap window is correctly identified",
+            "Verify that members with zero overlap are correctly reported"
+          ],
+          "expected_result": "The overlap heatmap correctly shows the overlapping windows. PST and JST have zero direct overlap. The maximum overlap window between EST, GMT, and IST is correctly identified as 10:30-12:00 UTC.",
+          "priority": "high"
+        },
+        {
+          "id": "TS-002",
+          "title": "DST transition does not break overlap calculation",
+          "category": "Timezone Engine Unit Tests",
+          "steps": [
+            "Create a team with members in US Eastern (observes DST) and India Standard Time (does not observe DST)",
+            "Calculate overlap for a date before US spring-forward (March 1)",
+            "Calculate overlap for a date after US spring-forward (March 15)",
+            "Compare the two overlap windows"
+          ],
+          "expected_result": "The overlap window shifts by exactly 1 hour after DST transition. The calculation uses the correct UTC offset for each date. No errors or incorrect timezone identification occurs.",
+          "priority": "high"
+        },
+        {
+          "id": "TS-003",
+          "title": "Task deadline timezone warning on assignment",
+          "category": "API Integration Tests",
+          "steps": [
+            "Create a task with a deadline of Friday 5:00 PM in the creator's timezone (UTC-8)",
+            "Assign the task to a member in UTC+5:30 (IST)",
+            "Check if the API response includes a timezone warning"
+          ],
+          "expected_result": "The API returns a warning indicating that the deadline (Friday 5:00 PM PST) is Saturday 6:30 AM IST, which is outside the assignee's configured working hours. A suggested adjusted deadline within working hours is provided.",
+          "priority": "high"
+        },
+        {
+          "id": "TS-004",
+          "title": "Async handoff delivery at recipient working hours",
+          "category": "Workflow Integration Tests",
+          "steps": [
+            "Create a handoff at 5:00 PM EST targeting members in UTC+9 (JST)",
+            "Verify the handoff is queued, not immediately delivered",
+            "Advance time to 9:00 AM JST (the start of recipients' working hours)",
+            "Verify the handoff notification is delivered",
+            "Verify the handoff status transitions: created → sent → viewed (when opened)"
+          ],
+          "expected_result": "The handoff is queued immediately upon creation. Notification is delivered at 9:00 AM in the recipients' timezone. Status correctly transitions through the lifecycle. The handoff content is intact and includes all linked tasks.",
+          "priority": "high"
+        },
+        {
+          "id": "TS-005",
+          "title": "Complete onboarding through first task assignment",
+          "category": "End-to-End Tests",
+          "steps": [
+            "Navigate to the registration page",
+            "Create a new workspace and admin account",
+            "Create a team and invite 3 members in different timezones",
+            "View the timezone overlap heatmap",
+            "Create a task and assign it to a team member",
+            "Verify timezone context is visible on the task card"
+          ],
+          "expected_result": "The entire flow completes without errors. The timezone heatmap displays correctly with all 3 members positioned in their respective timezones. The assigned task shows the deadline in both the creator's and assignee's local times.",
+          "priority": "high"
+        },
+        {
+          "id": "TS-006",
+          "title": "Working hours notification queuing",
+          "category": "Workflow Integration Tests",
+          "steps": [
+            "Configure a user's working hours as 9:00 AM - 6:00 PM UTC+1",
+            "Send a non-urgent notification to this user at 10:00 PM UTC+1",
+            "Verify the notification is queued, not delivered immediately",
+            "Advance time to 9:00 AM UTC+1",
+            "Verify the notification is delivered as part of the morning digest"
+          ],
+          "expected_result": "Non-urgent notifications are held until the start of the user's working hours. The morning digest includes all queued notifications from the overnight period. Notifications are ordered by priority within the digest.",
+          "priority": "high"
+        },
+        {
+          "id": "TS-007",
+          "title": "WebSocket presence updates on connect and disconnect",
+          "category": "Real-Time Communication Tests",
+          "steps": [
+            "Connect user A to the team's WebSocket channel",
+            "Verify all other connected users receive a presence update for user A (online)",
+            "Disconnect user A",
+            "Verify all other connected users receive a presence update for user A (offline)",
+            "Reconnect user A within the grace period",
+            "Verify no offline event was broadcast (grace period prevented false offline)"
+          ],
+          "expected_result": "Presence updates are broadcast within 2 seconds of connection state change. The grace period (configurable, default 30 seconds) prevents false offline events during brief disconnections. Reconnection restores online status without a gap.",
+          "priority": "medium"
+        },
+        {
+          "id": "TS-008",
+          "title": "Meeting scheduler fairness scoring",
+          "category": "API Integration Tests",
+          "steps": [
+            "Create a team with members in 4 timezones",
+            "Schedule 10 meetings over the past month with times favoring timezone A",
+            "Request meeting time suggestions for a new meeting",
+            "Verify suggestions account for historical fairness"
+          ],
+          "expected_result": "Suggested meeting times favor timezones that have been disadvantaged in previous meetings. The fairness score for each suggestion reflects historical distribution. The top suggestion balances convenience with fairness.",
+          "priority": "medium"
+        },
+        {
+          "id": "TS-009",
+          "title": "Task board displays correct local times for multiple timezones",
+          "category": "End-to-End Tests",
+          "steps": [
+            "Create 3 tasks assigned to members in UTC-5, UTC+0, and UTC+8",
+            "Set deadlines in the creator's timezone",
+            "View the task board as each assignee",
+            "Verify each assignee sees the deadline in their own local timezone"
+          ],
+          "expected_result": "Deadlines are displayed in the viewing user's local timezone. Timezone conversion is accurate including date changes (a Friday evening PST deadline shows as Saturday morning in UTC+8). Warning badges appear for tasks with deadlines outside the assignee's working hours.",
+          "priority": "medium"
+        },
+        {
+          "id": "TS-010",
+          "title": "Slack slash command creates task with correct timezone",
+          "category": "Third-Party Integration Tests",
+          "steps": [
+            "Issue the /taskflow create slash command from Slack with a deadline",
+            "Verify the task is created with the correct timezone based on the Slack user's configured timezone",
+            "Verify a confirmation message is posted to the Slack channel",
+            "Verify the task appears in the web application with correct timezone data"
+          ],
+          "expected_result": "The task is created with the deadline interpreted in the Slack user's timezone. The confirmation message shows the deadline in both the creator's timezone and UTC. The task is visible in the web app immediately.",
+          "priority": "low"
+        },
+        {
+          "id": "TS-011",
+          "title": "Half-hour timezone offset handling",
+          "category": "Timezone Engine Unit Tests",
+          "steps": [
+            "Create members in India (UTC+5:30), Nepal (UTC+5:45), and Iran (UTC+3:30)",
+            "Calculate overlap windows with standard working hours",
+            "Verify that half-hour and quarter-hour offsets produce correct overlap bands"
+          ],
+          "expected_result": "Overlap calculation correctly handles non-integer hour offsets. The overlap band boundaries align precisely with the fractional timezone offsets. No rounding errors occur.",
+          "priority": "high"
+        },
+        {
+          "id": "TS-012",
+          "title": "Concurrent handoff creation and task update",
+          "category": "Workflow Integration Tests",
+          "steps": [
+            "User A creates a handoff that references task T1",
+            "Simultaneously, user B updates task T1's status to 'completed'",
+            "Verify the handoff is created with the task's state at creation time",
+            "Verify the task update is not lost"
+          ],
+          "expected_result": "Both operations succeed without data corruption. The handoff snapshot reflects the task state at handoff creation time. The task's current state reflects the latest update. No race condition causes data loss or inconsistency.",
+          "priority": "medium"
+        }
+      ],
+      "edge_cases": [
+        "Team member changes timezone mid-sprint (relocates or travels) — all scheduled notifications and handoff deliveries must adjust",
+        "Timezone with DST observing a different transition date than expected (e.g., countries that change DST rules with short notice)",
+        "User sets working hours that span midnight (e.g., night shift: 10 PM to 6 AM)",
+        "Task deadline set in a timezone that will undergo a DST transition before the deadline arrives",
+        "Two team members share the same timezone offset but different DST rules (e.g., Arizona vs. Mountain Time)",
+        "Organization spans the International Date Line — some members are on Monday while others are still on Sunday",
+        "Calendar integration returns events in a different timezone format than the user's configured timezone",
+        "WebSocket reconnection during a burst of presence updates leads to out-of-order messages",
+        "Handoff created seconds before the recipient timezone's working hours start — should it deliver immediately or queue for next day?",
+        "Free plan team exceeds member limit while being added via Slack integration"
+      ],
+      "coverage_assessment": "The test plan provides strong coverage for the highest-risk areas: timezone calculations (property-based + edge case unit tests), data integrity (integration tests for all CRUD operations), and critical user workflows (E2E for onboarding, task management, and handoffs). Coverage gaps exist in: performance under load (deferred to pre-launch load testing), accessibility testing (manual audit recommended), and long-running timezone drift scenarios (e.g., behavior over a full DST cycle). The Slack and calendar integration tests use recorded HTTP responses, which means they do not catch API changes by the providers — periodic live integration smoke tests in staging are recommended.",
+      "risk_based_priorities": [
+        "Timezone correctness tests are the highest priority — a single timezone bug visible to users would undermine the product's core credibility",
+        "Handoff delivery timing must be reliable — a handoff delivered at 3 AM instead of 9 AM destroys user trust in the async workflow",
+        "Authentication and authorization tests prevent data leakage between organizations — a critical security concern",
+        "Task deadline timezone conversion must be pixel-perfect — users will compare displayed times against their system clock",
+        "WebSocket presence must handle network instability gracefully — false offline indicators create unnecessary team anxiety"
+      ],
+      "automation_recommendations": [
+        "Run timezone engine unit tests on every commit via CI — these are fast and catch the highest-risk regressions",
+        "Run API integration tests on every pull request — use a containerized test database for isolation",
+        "Run E2E tests nightly against the staging environment — these are slower but catch cross-component regressions",
+        "Use property-based testing (Hypothesis for Python, fast-check for TypeScript) for timezone calculations to discover edge cases humans would miss",
+        "Implement a DST transition regression suite that runs monthly with dates spanning the next 12 months of global DST transitions",
+        "Set up synthetic monitoring in production that periodically verifies timezone overlap calculations against known-correct results",
+        "Use snapshot testing for API response schemas to catch unintended schema changes during refactoring"
+      ]
+    },
+    {
+      "strategy": "Testing for {{project_name}} prioritizes correctness of timezone operations above all other concerns. The strategy combines exhaustive unit testing of the timezone calculation library with scenario-based integration tests that validate timezone-aware behavior across the full application stack. End-to-end tests focus on validating that the user experience correctly reflects timezone calculations. Performance testing ensures that timezone operations scale to large team sizes without degradation.",
+      "test_categories": [
+        {
+          "name": "Core Timezone Logic",
+          "description": "Unit and property-based tests for all timezone calculation functions. Tests generated with randomized timezone combinations to discover edge cases systematically.",
+          "priority": "high"
+        },
+        {
+          "name": "Data Integrity",
+          "description": "Integration tests ensuring timezone data is correctly stored, retrieved, and converted at every layer: API input, database storage, query results, and API output.",
+          "priority": "high"
+        },
+        {
+          "name": "User Workflow Validation",
+          "description": "End-to-end tests for complete user journeys: account creation, team setup, task management with timezone context, handoff workflows, and meeting scheduling.",
+          "priority": "medium"
+        },
+        {
+          "name": "Resilience and Edge Cases",
+          "description": "Tests for failure modes: provider API outages, WebSocket disconnections, concurrent data modifications, and timezone data inconsistencies.",
+          "priority": "medium"
+        },
+        {
+          "name": "Performance Benchmarks",
+          "description": "Benchmarks for timezone overlap calculation at various team sizes (10, 50, 100, 500 members). WebSocket throughput tests. Database query performance for timezone-heavy queries.",
+          "priority": "low"
+        }
+      ],
+      "test_scenarios": [
+        {
+          "id": "TC-001",
+          "title": "Overlap calculation produces symmetric results",
+          "category": "Core Timezone Logic",
+          "steps": [
+            "Compute overlap between member A in timezone X and member B in timezone Y",
+            "Compute overlap between member B in timezone Y and member A in timezone X",
+            "Compare the results"
+          ],
+          "expected_result": "The overlap windows are identical regardless of computation order. This symmetry property must hold for all timezone pairs and working hour configurations.",
+          "priority": "high"
+        },
+        {
+          "id": "TC-002",
+          "title": "Timezone change mid-workflow preserves data integrity",
+          "category": "Data Integrity",
+          "steps": [
+            "Create a task with a deadline while the assignee is in UTC-5",
+            "Change the assignee's timezone to UTC+1",
+            "Retrieve the task",
+            "Verify the stored deadline (in UTC) has not changed",
+            "Verify the displayed deadline reflects the new timezone"
+          ],
+          "expected_result": "The deadline is stored as UTC and never changes when a user updates their timezone. The display layer converts UTC to the viewer's current timezone. Historical records retain their original timezone context.",
+          "priority": "high"
+        },
+        {
+          "id": "TC-003",
+          "title": "Full async handoff cycle across timezone boundary",
+          "category": "User Workflow Validation",
+          "steps": [
+            "Team lead in UTC-8 creates a handoff at 5 PM local time",
+            "Handoff targets team members in UTC+8",
+            "Verify handoff is queued with delivery at 9 AM UTC+8",
+            "Simulate time advancing to 9 AM UTC+8",
+            "Verify handoff notification is delivered",
+            "Target member opens and acknowledges the handoff",
+            "Target member marks handoff as completed after acting on tasks",
+            "Original author views the completed handoff"
+          ],
+          "expected_result": "The complete handoff lifecycle executes correctly with timezone-appropriate delivery timing. All status transitions are recorded with accurate timestamps in UTC. Both parties see times displayed in their respective local timezones.",
+          "priority": "high"
+        },
+        {
+          "id": "TC-004",
+          "title": "Notification delivery respects working hours across DST change",
+          "category": "Core Timezone Logic",
+          "steps": [
+            "User has working hours 9 AM - 6 PM in US Pacific timezone",
+            "Queue a notification on the Saturday before spring-forward DST change",
+            "Verify notification delivery time accounts for the timezone offset changing on Sunday"
+          ],
+          "expected_result": "The notification delivers at 9 AM Pacific Daylight Time (UTC-7) on Monday, not 9 AM Pacific Standard Time (UTC-8). The system correctly detects that the timezone offset changed between queueing and delivery.",
+          "priority": "high"
+        },
+        {
+          "id": "TC-005",
+          "title": "Task board renders correctly for users in different timezones",
+          "category": "User Workflow Validation",
+          "steps": [
+            "Create a task due Thursday at 3 PM UTC",
+            "View the task board as a user in UTC+12 (where it is already Friday)",
+            "View the task board as a user in UTC-10 (where it is still Wednesday)",
+            "Verify date displays match each user's local calendar"
+          ],
+          "expected_result": "The UTC+12 user sees the deadline as Friday 3 AM local time. The UTC-10 user sees the deadline as Thursday 5 AM local time. Date-relative labels ('tomorrow', 'in 2 days') are accurate for each viewer's perspective.",
+          "priority": "medium"
+        },
+        {
+          "id": "TC-006",
+          "title": "WebSocket reconnection preserves presence accuracy",
+          "category": "Resilience and Edge Cases",
+          "steps": [
+            "Connect 5 team members to the presence channel",
+            "Simulate network interruption for member C",
+            "Verify member C is not shown as offline during the grace period",
+            "Reconnect member C within the grace period",
+            "Verify no false offline event was broadcast",
+            "Disconnect member D and wait beyond the grace period",
+            "Verify member D is correctly shown as offline"
+          ],
+          "expected_result": "The grace period prevents false offline notifications during brief network interruptions. Once the grace period expires, the offline status is correctly broadcast. Reconnection within the grace period is seamless.",
+          "priority": "medium"
+        },
+        {
+          "id": "TC-007",
+          "title": "Overlap calculation performance at scale",
+          "category": "Performance Benchmarks",
+          "steps": [
+            "Generate a team with 10 members in random timezones — benchmark overlap calculation",
+            "Repeat with 50, 100, and 500 members",
+            "Verify all calculations complete within acceptable latency bounds"
+          ],
+          "expected_result": "10 members: under 5ms. 50 members: under 50ms. 100 members: under 200ms. 500 members: under 1 second. Results are cached with a TTL that invalidates on team composition or working hours changes.",
+          "priority": "low"
+        },
+        {
+          "id": "TC-008",
+          "title": "Authorization prevents cross-organization data access",
+          "category": "Data Integrity",
+          "steps": [
+            "Create two organizations with separate teams and tasks",
+            "Authenticate as a user in Organization A",
+            "Attempt to access a task belonging to Organization B via direct API call",
+            "Attempt to join a team in Organization B",
+            "Attempt to view a handoff in Organization B"
+          ],
+          "expected_result": "All cross-organization access attempts return 403 Forbidden or 404 Not Found. No data from Organization B is leaked in error messages. Audit log records the unauthorized access attempts.",
+          "priority": "high"
+        }
+      ],
+      "edge_cases": [
+        "User in a timezone with a 45-minute offset (Nepal, UTC+5:45) — all calculations must handle non-standard offsets",
+        "Team spans exactly 24 hours of timezone coverage — overlap calculation should report 0 hours or handle the wraparound correctly",
+        "Working hours configured as empty (user on vacation) — handoffs should skip this user, notifications should not queue",
+        "Multiple DST transitions in a single year for the same timezone (historical: Egypt changed DST rules multiple times in 2014)",
+        "Task created in a timezone that is abolished or merged (rare but possible with political changes)",
+        "Bulk import of 100+ team members simultaneously — overlap calculation should not timeout",
+        "User views the timezone map at exactly the moment a DST transition occurs for one of their team members",
+        "Handoff references a task that is deleted between handoff creation and delivery"
+      ],
+      "coverage_assessment": "The test plan achieves comprehensive coverage of timezone correctness through layered testing: property-based tests catch systematic errors, edge case tests catch known-tricky scenarios, and integration tests catch cross-layer bugs. The primary coverage gap is in long-term timezone behavior — the plan does not include a test that runs continuously across actual DST transitions (only simulated ones). Production monitoring of timezone calculations against a reference implementation is recommended to catch bugs that only manifest on specific real-world dates. Browser compatibility testing for the timezone visualization is limited to Chrome and Firefox in the automated suite.",
+      "risk_based_priorities": [
+        "Timezone calculation correctness: the product has zero credibility if timezone math is wrong",
+        "Data isolation between organizations: a data leak is an existential security incident",
+        "Handoff delivery timing accuracy: users depend on handoffs arriving at the right time",
+        "Notification working-hours enforcement: delivering notifications at 3 AM is a trust-destroying experience",
+        "Task deadline timezone conversion: must be verifiably correct against independent timezone references"
+      ],
+      "automation_recommendations": [
+        "Integrate property-based timezone tests into the pre-commit hook for rapid feedback",
+        "Use GitHub Actions matrix strategy to run timezone-sensitive tests across multiple simulated system timezones (UTC, EST, IST, JST)",
+        "Implement contract testing between frontend and backend to catch timezone format mismatches early",
+        "Create a timezone regression test corpus that grows over time as bugs are discovered and fixed",
+        "Run weekly scheduled tests against a database seeded with real-world-like timezone distributions",
+        "Establish a performance baseline for overlap calculations and fail CI if performance regresses by more than 20%"
+      ]
+    }
+  ]
+}
